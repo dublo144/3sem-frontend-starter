@@ -17,7 +17,7 @@ const Login = ({ message = 'Log-in to your account' }) => {
 
   const initialState = { username: '', password: '' };
   const [loginCredentials, setLoginCredentials] = useState(initialState);
-  const { signIn, user } = useAuth();
+  const { signIn, isAuthenticated, isLoading } = useAuth();
 
   const handleChange = (e) => {
     setLoginCredentials({
@@ -29,14 +29,15 @@ const Login = ({ message = 'Log-in to your account' }) => {
   const handleLogin = (e) => {
     e.preventDefault();
     signIn(loginCredentials.username, loginCredentials.password);
+    if (isAuthenticated) {
+      history.replace(from);
+    }
     setLoginCredentials(initialState);
-    history.replace(from);
   };
 
   return (
     <Grid textAlign='center' style={{ height: '100vh' }} verticalAlign='middle'>
       <Grid.Column style={{ maxWidth: 450 }}>
-        {console.log(user)}
         <Header as='h2' color='blue' textAlign='center'>
           {message}
         </Header>
@@ -62,7 +63,13 @@ const Login = ({ message = 'Log-in to your account' }) => {
               value={loginCredentials.password}
             />
 
-            <Button onClick={handleLogin} color='blue' fluid size='large'>
+            <Button
+              loading={isLoading}
+              onClick={handleLogin}
+              color='blue'
+              fluid
+              size='large'
+            >
               Login
             </Button>
           </Segment>

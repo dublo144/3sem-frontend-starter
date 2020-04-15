@@ -1,5 +1,3 @@
-import { authUtils } from './authUtils';
-
 const baseURL = 'http://localhost:8080/security_war_exploded';
 
 const handleHttpErrors = (res) => {
@@ -26,8 +24,9 @@ const makeOptions = (method, body, token) => {
   return opts;
 };
 
-const fetchData = (url, opts) => {
-  return fetch(`${baseURL}/${url}`, opts).then(handleHttpErrors);
+const fetchData = async (url, opts) => {
+  const res = await fetch(`${baseURL}/${url}`, opts);
+  return handleHttpErrors(res);
 };
 
 export const apiUtils = {

@@ -1,9 +1,8 @@
-import React, { useState, useContext, createContext } from 'react';
+import React, { useState, useContext, useEffect, createContext } from 'react';
 import { useHistory } from 'react-router-dom';
 import { apiUtils } from '../utils/apiUtils';
 
 const authContext = createContext();
-const URL = 'http://localhost:8080/security_war_exploded';
 
 // Hook for child components to get the auth object ...
 // ... and re-render when it changes.
@@ -13,58 +12,62 @@ export const useAuth = () => {
 };
 
 const useProvideAuth = () => {
-  const [isAuthenticated, setisAuthenticated] = useState(false);
-  const [role, setRole] = useState(null);
-  const [jwtToken, setJwtToken] = useState(null);
+  const [roles, setRoles] = useState(null);
+  const [jwtToken, setJwtToken] = useState();
   const [name, setName] = useState(null);
+  const [isAuthenticated, setIsAuthenticated] = useState();
+  const [isLoading, setIsLoading] = useState(false);
 
   const history = useHistory();
 
-  const signIn = (username, password, from) => {
-    const options = apiUtils.makeOptions('POST', true, {
+  useEffect(() => {
+    setIsAuthenticated(!!jwtToken);
+  }, [jwtToken]);
+
+  const signIn = async (username, password, from) => {
+    const options = apiUtils.makeOptions('POST', {
       username: username,
       password: password
     });
-    setisAuthenticated(true);
-    // return fetch(`${URL}/api/login`, options)
-    //   .then((res) => apiUtils.handleHttpErrors(res))
-    //   .then((res) => {
-    //     authUtils.setToken(res.token);
-    //     authUtils.setRole(res.role);
-    //     setisAuthenticated(true);
-    //   })
-    //   .catch((error) => {
-    //     if (error.status) {
-    //       error.fullError.then((e) => alert(e.message));
-    //     } else {
-    //       alert('Network error');
-    //     }
-    //   });
+
+    try {
+      setIsLoading(true);
+      const res = await apiUtils.fetchData('/login', options);
+      setName(res.username);
+      setJwtToken(res.token);
+      setRoles(res.roles);
+    } catch (error) {
+      if (error.status) {
+        error.fullError.then((e) => alert(e.message));
+      } else {
+        console.log('Network error');
+      }
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const signOut = () => {
-    // authUtils.logout();
     setName(null);
     setJwtToken(null);
-    setisAuthenticated(false);
     history.push('/');
   };
 
-  const isLoggedIn = () => {
-    return !!jwtToken;
+  const authenticateRole = (role) => {
+    return isAuthenticated && roles.includes(role);
   };
 
   // Return isAuthenticated object and auth methods
   return {
     user: {
       name,
-      role,
+      authenticateRole,
       jwtToken,
-      isLoggedIn
+      isAuthenticated
     },
-    isAuthenticated,
     signIn,
-    signOut
+    signOut,
+    isLoading
   };
 };
 
